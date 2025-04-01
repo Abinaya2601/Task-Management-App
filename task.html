@@ -1,0 +1,21 @@
+import React, { useState, useEffect } from "react"; import { useDrag, useDrop } from "react-dnd"; import "tailwindcss/tailwind.css";
+
+const TaskItem = ({ task, index, moveTask, toggleComplete }) => { const [, ref] = useDrag({ type: "TASK", item: { index }, }); const [, drop] = useDrop({ accept: "TASK", hover: (draggedItem) => { if (draggedItem.index !== index) { moveTask(draggedItem.index, index); draggedItem.index = index; } }, });
+
+return ( <div ref={(node) => ref(drop(node))} className="p-2 border flex justify-between bg-white shadow-md rounded-md"> <input type="checkbox" checked={task.completed} onChange={() => toggleComplete(task.id)} /> <span className={task.completed ? "line-through" : ""}>{task.title}</span> </div> ); };
+
+const TaskManager = () => { const [tasks, setTasks] = useState([]); const [newTask, setNewTask] = useState("");
+
+useEffect(() => { const savedTasks = JSON.parse(localStorage.getItem("tasks")) || []; setTasks(savedTasks); }, []);
+
+useEffect(() => { localStorage.setItem("tasks", JSON.stringify(tasks)); }, [tasks]);
+
+const addTask = () => { if (newTask.trim()) { setTasks([...tasks, { id: Date.now(), title: newTask, completed: false }]); setNewTask(""); } };
+
+const toggleComplete = (id) => { setTasks(tasks.map((task) => (task.id === id ? { ...task, completed: !task.completed } : task))); };
+
+const moveTask = (fromIndex, toIndex) => { const updatedTasks = [...tasks]; const [movedTask] = updatedTasks.splice(fromIndex, 1); updatedTasks.splice(toIndex, 0, movedTask); setTasks(updatedTasks); };
+
+return ( <div className="p-6 bg-gray-100 min-h-screen"> <h1 className="text-2xl font-bold text-center mb-4">Task Manager</h1> <div className="flex space-x-2 mb-4"> <input className="border p-2 w-full" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="Enter task" /> <button className="bg-blue-500 text-white px-4 py-2" onClick={addTask}>Add</button> </div> <div className="space-y-2"> {tasks.map((task, index) => ( <TaskItem key={task.id} task={task} index={index} moveTask={moveTask} toggleComplete={toggleComplete} /> ))} </div> </div> ); };
+
+export default TaskManager;
